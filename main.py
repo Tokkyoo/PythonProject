@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response
 
 app = Flask(__name__)
 
@@ -15,7 +15,9 @@ def valid_login(username, password):
 
 def log_the_user_in(username):
     # Cette fonction pourrait enregistrer l'utilisateur connecté dans une session ou effectuer d'autres actions.
-    return f'Logged in as {username}'
+    resp = make_response(f'Logged in as {username}')
+    resp.set_cookie('username', username)
+    return resp
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -23,6 +25,7 @@ def login():
     if request.method == 'POST':
         if valid_login(request.form['username'],
                        request.form['password']):
+            
             return log_the_user_in(request.form['username'])
         else:
             error = 'Invalid username/password'
@@ -30,13 +33,16 @@ def login():
     # was GET or the credentials were invalid
     return render_template('login.html', error=error)
 
-@app.route('/')
-def index():
-    username = request.cookies.get('username')
-    # use cookies.get(key) instead of cookies[key] to not get a
-    # KeyError if the cookie is missing.
 
 
 @app.route("/animelist")
 def animelist():
+    username = request.cookies.get('username')
     return render_template('animelist.html')
+
+@app.route('/logout')
+def logout():
+    # Supprimer le cookie 'username' lors de la déconnexion
+    resp = make_response('Logged out.')
+    resp.set_cookie('username', '', expires=0)  # Le cookie expire instantanément
+    return resp
