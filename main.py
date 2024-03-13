@@ -9,9 +9,13 @@ def hello_world():
 
 
 def valid_login(username, password):
-    # Cette fonction devrait vérifier si le nom d'utilisateur et le mot de passe sont valides.
-    # Vous pouvez implémenter la validation selon vos besoins.
-    return username == 'admin' and password == 'password'
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM Users WHERE username = ? AND password = ?', (username, password))
+    user = cursor.fetchone()
+    conn.close()
+    return user
 
 
 def log_the_user_in(username):
@@ -53,7 +57,7 @@ def logout_page():
     return render_template('logout.html')
 
 
-DATABASE = '/path/to/database.db'
+DATABASE = 'database.db'
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -66,3 +70,12 @@ def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
+
+
+def init_db():
+    with app.app_context():
+        db = get_db()
+        with app.open_resource('animelist.sql', mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
+
