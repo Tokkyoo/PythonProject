@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, make_response
+import sqlite3
+from flask import Flask, render_template, request, make_response, redirect, g
 
 app = Flask(__name__)
 
@@ -15,7 +16,7 @@ def valid_login(username, password):
 
 def log_the_user_in(username):
     # Cette fonction pourrait enregistrer l'utilisateur connecté dans une session ou effectuer d'autres actions.
-    resp = make_response(f'Logged in as {username}')
+    resp = make_response(redirect('/animelist'))
     resp.set_cookie('username', username)
     return resp
 
@@ -43,6 +44,25 @@ def animelist():
 @app.route('/logout')
 def logout():
     # Supprimer le cookie 'username' lors de la déconnexion
-    resp = make_response('Logged out.')
+    resp = make_response(redirect('/logout-page'))  # Redirection vers la page de déconnexion
     resp.set_cookie('username', '', expires=0)  # Le cookie expire instantanément
-    return resp
+    return resp 
+
+@app.route('/logout-page')
+def logout_page():
+    return render_template('logout.html')
+
+
+DATABASE = '/path/to/database.db'
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
