@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 from flask import Flask, render_template, request, make_response, redirect, g
 
 app = Flask(__name__)
@@ -16,17 +17,18 @@ def valid_login(username, password):
     user = cursor.fetchone()
     conn.close()
     return user
-
+ 
 
 def log_the_user_in(username):
     # Cette fonction pourrait enregistrer l'utilisateur connecté dans une session ou effectuer d'autres actions.
     resp = make_response(redirect('/animelist'))
-    resp.set_cookie('username', username)
+    resp.set_cookie('username', username)#Je mets comme value l'utisateur que j'ai mis en parametre, en effet c'est pas sécurisé.
     return resp
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
     error = None
+    
     if request.method == 'POST':
         if valid_login(request.form['username'],
                        request.form['password']):
@@ -39,12 +41,6 @@ def login():
     return render_template('login.html', error=error)
 
 
-
-@app.route("/animelist")
-def animelist():
-    username = request.cookies.get('username')
-    return render_template('animelist.html')
-
 @app.route('/logout')
 def logout():
     # Supprimer le cookie 'username' lors de la déconnexion
@@ -52,7 +48,7 @@ def logout():
     resp.set_cookie('username', '', expires=0)  # Le cookie expire instantanément
     return resp 
 
-@app.route('/logout-page')
+@app.route('/logout-page')  
 def logout_page():
     return render_template('logout.html')
 
@@ -78,4 +74,42 @@ def init_db():
         with app.open_resource('animelist.sql', mode='r') as f:
             db.cursor().executescript(f.read())
         db.commit()
+
+def get_watched_animes(username):
+    # Exécuter la requête SQL pour récupérer les animés regardés par l'utilisateur
+    query = '''
+    SELECT Animes.name, Animes.description, Animes.episode_count, Watched_Animes.finish_date
+    FROM Watched_Animes
+    INNER JOIN Animes ON Watched_Animes.anime_id = Animes.id
+    INNER JOIN Users ON Watched_Animes.user_id = Users.id
+    WHERE Users.username = ?;
+    '''
+    watched_animes = query_db(query, [username], one=False)
+    print(watched_animes)
+    return watched_animes
+
+def query_db(query, args=(), one=False):
+    try:
+        cur = get_db().execute(query, args)
+        rv = cur.fetchall()
+        cur.close()
+        return (rv[0] if rv else None) if one else rv
+    except Exception as e:
+        print("Error executing query:", e)
+        return None
+
+@app.route("/animelist")
+def animelist():
+    username = request.cookies.get('username')
+    
+    print(username)
+    if username:
+        watched_animes = get_watched_animes(username)
+        print('pipi')
+        print(watched_animes)
+        return render_template('animelist.html', watched_animes=watched_animes)
+    else:
+        return redirect('/login')
+
+
 

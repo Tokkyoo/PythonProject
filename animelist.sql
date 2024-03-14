@@ -1,13 +1,13 @@
 -- Users table
 CREATE TABLE Users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL
 );
 
 -- Animes table
 CREATE TABLE Animes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     episode_count INT,
@@ -17,9 +17,9 @@ CREATE TABLE Animes (
 
 -- Table for animes watched by users
 CREATE TABLE Watched_Animes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
-    anime_id INT,
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER,
+    anime_id INTEGER,
     finish_date DATE,
     FOREIGN KEY (user_id) REFERENCES Users(id),
     FOREIGN KEY (anime_id) REFERENCES Animes(id)
@@ -42,4 +42,3 @@ INSERT INTO Watched_Animes (user_id, anime_id, finish_date) VALUES
 (1, 1, '2023-05-10'), -- User 1 finished watching Naruto on May 10, 2023
 (1, 2, '2022-12-15'), -- User 1 finished watching One Piece on December 15, 2022
 (2, 2, '2023-01-20'); -- User 2 finished watching One Piece on January 20, 2023
-

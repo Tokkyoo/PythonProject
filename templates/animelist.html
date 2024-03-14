@@ -33,29 +33,22 @@
     </style>
 </head>
 <body>
-    <h2>Animes</h2>
+    <h2>Animelist</h2>
     <table>
         <tr>
             <th>Nom de l'anime</th>
             <th>Description</th>
             <th>Nombre d'épisodes vus</th>
+            <th>Date de fin de visionnage</th>
         </tr>
+        {% for anime in watched_animes %}
         <tr>
-            <td>Naruto</td>
-            <td>Un jeune ninja ambitieux cherche à devenir le ninja le plus puissant et à être reconnu par ses pairs.</td>
-            <td>50</td>
+            <td>{{ anime[0] }}</td>
+            <td>{{ anime[1] }}</td>
+            <td>{{ anime[2] }}</td>
+            <td>{{ anime[3] }}</td>
         </tr>
-        <tr>
-            <td>One Piece</td>
-            <td>Un groupe de pirates se lance dans une quête épique pour trouver le trésor légendaire, le One Piece.</td>
-            <td>200</td>
-        </tr>
-        <tr>
-            <td>Dragon Ball Z</td>
-            <td>Goku et ses amis se battent pour protéger la Terre contre des menaces extraterrestres et des tyrans intergalactiques.</td>
-            <td>150</td>
-        </tr>
-        <!-- Ajoutez plus de lignes ici pour plus d'animes -->
+        {% endfor %}
     </table>
     <a href="/logout" class="logout-btn">Déconnexion</a>
 </body>
