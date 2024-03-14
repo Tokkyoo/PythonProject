@@ -9,7 +9,6 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
-
 def valid_login(username, password):
     
     conn = get_db()
@@ -46,7 +45,6 @@ def login():
     # was GET or the credentials were invalid
     return render_template('login.html', error=error)
 
-
 @app.route('/logout')
 def logout():
     # Supprimer le cookie 'username' lors de la déconnexion
@@ -57,7 +55,6 @@ def logout():
 @app.route('/logout-page')  
 def logout_page():
     return render_template('logout.html')
-
 
 DATABASE = 'database.db'
 
@@ -72,8 +69,6 @@ def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
-
-
 def init_db():
     with app.app_context():
         db = get_db()
@@ -83,7 +78,6 @@ def init_db():
 
 def get_watched_animes(username):
     # Exécuter la requête SQL pour récupérer les animés regardés par l'utilisateur
-    
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -94,12 +88,16 @@ def get_watched_animes(username):
     WHERE Users.username = ?;
     ''', (username,))
     watched_animes = cursor.fetchall()
-    conn.close()
-   
-    print(watched_animes)
+    
     return watched_animes
 
-
+def get_anime():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT name FROM Animes')
+    animes = cursor.fetchall()
+    return animes
+    
 @app.route("/animelist")
 def animelist():
     username = request.cookies.get('username')
@@ -107,12 +105,12 @@ def animelist():
     print(username)
     if username:
         watched_animes = get_watched_animes(username)
-        
+        animes = get_anime()
         print(watched_animes)
-        return render_template('animelist.html', watched_animes=watched_animes)
+        print(animes)
+        return render_template('animelist.html', watched_animes=watched_animes, animes=animes)
     else:
         return redirect('/login')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -138,6 +136,33 @@ def register():
 if not Path(DATABASE).exists():
     with app.app_context():
         db = get_db()
-        sql = Path('ideas.sql').read_text()
+        sql = Path('animelist.sql').read_text()
         db.cursor().executescript(sql)
         db.commit()
+
+
+@app.route('/addanime', methods=['POST'])
+def add_anime():
+    if request.method == 'POST':
+        anime_name = request.form['anime']
+        username = request.cookies.get('username')
+        # Ajouter l'anime sélectionné à la table watched_animes
+        add_anime_to_watched_animes(anime_name, username)
+        
+        # Rediriger vers la même page pour actualiser la liste des animes regardés
+        return redirect(url_for('animelist'))
+    
+def add_anime_to_watched_animes(anime_name, username):
+
+    today = datetime.date.today()
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id FROM Animes WHERE name = ?', (anime_name,))
+    anime_id = cursor.fetchone()
+
+    cursor.execute('SELECT id FROM Users WHERE username = ?', (username,))
+    user_id = cursor.fetchone()
+
+    cursor.execute("INSERT INTO Watched_Animes (user_id, anime_id, finish_date) VALUES (?, ?, ?)", (user_id[0], anime_id[0], today))
+    conn.commit() 

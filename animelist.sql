@@ -42,3 +42,5 @@ INSERT INTO Watched_Animes (user_id, anime_id, finish_date) VALUES
 (1, 1, '2023-05-10'), -- User 1 finished watching Naruto on May 10, 2023
 (1, 2, '2022-12-15'), -- User 1 finished watching One Piece on December 15, 2022
 (2, 2, '2023-01-20'); -- User 2 finished watching One Piece on January 20, 2023
+
+

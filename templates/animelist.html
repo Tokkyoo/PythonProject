@@ -5,6 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Animes</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+        }
+        select, button {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
         table {
             border-collapse: collapse;
             width: 100%;
@@ -33,23 +73,34 @@
     </style>
 </head>
 <body>
-    <h2>Animelist</h2>
-    <table>
-        <tr>
-            <th>Nom de l'anime</th>
-            <th>Description</th>
-            <th>Nombre d'épisodes vus</th>
-            <th>Date de fin de visionnage</th>
-        </tr>
-        {% for anime in watched_animes %}
-        <tr>
-            <td>{{ anime[0] }}</td>
-            <td>{{ anime[1] }}</td>
-            <td>{{ anime[2] }}</td>
-            <td>{{ anime[3] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <a href="/logout" class="logout-btn">Déconnexion</a>
+    <div class="container">
+        <h2>Animelist</h2>
+        <form action="/addanime" method="post">
+            <label for="anime">Sélectionnez un anime :</label>
+            <select name="anime" id="anime">
+                {% for anime in animes %}
+                <option value="{{ anime[0] }}">{{ anime[0] }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Ajouter</button>
+        </form>
+        <table>
+            <tr>
+                <th>Nom de l'anime</th>
+                <th>Description</th>
+                <th>Nombre d'épisodes vus</th>
+                <th>Date de fin de visionnage</th>
+            </tr>
+            {% for anime in watched_animes %}
+            <tr>
+                <td>{{ anime[0] }}</td>
+                <td>{{ anime[1] }}</td>
+                <td>{{ anime[2] }}</td>
+                <td>{{ anime[3] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <a href="/logout" class="logout-btn">Déconnexion</a>
+    </div>
 </body>
 </html>
