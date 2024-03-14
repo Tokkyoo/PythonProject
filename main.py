@@ -1,12 +1,13 @@
 import sqlite3
 import datetime
-from flask import Flask, render_template, request, make_response, redirect, g
+from flask import Flask, render_template, request, make_response, redirect, g, url_for
 
+from pathlib import Path
 app = Flask(__name__)
 
 @app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+def index():
+    return render_template('index.html')
 
 
 def valid_login(username, password):
@@ -15,9 +16,14 @@ def valid_login(username, password):
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM Users WHERE username = ? AND password = ?', (username, password))
     user = cursor.fetchone()
-    conn.close()
     return user
- 
+
+def already_register(username):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT username FROM Users WHERE username = ?', (username,))
+    user = cursor.fetchone()
+    return user is not None
 
 def log_the_user_in(username):
     # Cette fonction pourrait enregistrer l'utilisateur connecté dans une session ou effectuer d'autres actions.
@@ -77,26 +83,22 @@ def init_db():
 
 def get_watched_animes(username):
     # Exécuter la requête SQL pour récupérer les animés regardés par l'utilisateur
-    query = '''
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('''
     SELECT Animes.name, Animes.description, Animes.episode_count, Watched_Animes.finish_date
     FROM Watched_Animes
     INNER JOIN Animes ON Watched_Animes.anime_id = Animes.id
     INNER JOIN Users ON Watched_Animes.user_id = Users.id
     WHERE Users.username = ?;
-    '''
-    watched_animes = query_db(query, [username], one=False)
+    ''', (username,))
+    watched_animes = cursor.fetchall()
+    conn.close()
+   
     print(watched_animes)
     return watched_animes
 
-def query_db(query, args=(), one=False):
-    try:
-        cur = get_db().execute(query, args)
-        rv = cur.fetchall()
-        cur.close()
-        return (rv[0] if rv else None) if one else rv
-    except Exception as e:
-        print("Error executing query:", e)
-        return None
 
 @app.route("/animelist")
 def animelist():
@@ -105,11 +107,37 @@ def animelist():
     print(username)
     if username:
         watched_animes = get_watched_animes(username)
-        print('pipi')
+        
         print(watched_animes)
         return render_template('animelist.html', watched_animes=watched_animes)
     else:
         return redirect('/login')
 
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    error = None
+    if request.method == 'POST':
+        # Traitement du formulaire d'inscription ici
+        username = request.form['username']
+        password = request.form['password']
 
+        # Vérifier si l'utilisateur est déjà enregistré
+        if already_register(username):
+            error = 'Username already exists. Please choose a different username.'
+        else:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO Users (username, password) VALUES (?, ?)", (username, password))
+            db.commit()  # Commit the transaction before closing the connection
+            return redirect(url_for('login'))
+
+    # Si la méthode de requête est GET ou si une erreur s'est produite, afficher la page d'inscription
+    return render_template('register.html', error=error)
+
+if not Path(DATABASE).exists():
+    with app.app_context():
+        db = get_db()
+        sql = Path('ideas.sql').read_text()
+        db.cursor().executescript(sql)
+        db.commit()
