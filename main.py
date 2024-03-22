@@ -25,9 +25,9 @@ def already_register(username):
     return user is not None
 
 def log_the_user_in(username):
-    # Cette fonction pourrait enregistrer l'utilisateur connecté dans une session ou effectuer d'autres actions.
+    # This function creates a cookie when a user logs in
     resp = make_response(redirect('/animelist'))
-    resp.set_cookie('username', username)#Je mets comme value l'utisateur que j'ai mis en parametre, en effet c'est pas sécurisé.
+    resp.set_cookie('username', username) # I put the user as the value, which is not secure.
     return resp
 
 @app.route('/login', methods=['POST', 'GET'])
@@ -41,15 +41,14 @@ def login():
             return log_the_user_in(request.form['username'])
         else:
             error = 'Invalid username/password'
-    # the code below is executed if the request method
-    # was GET or the credentials were invalid
+ 
     return render_template('login.html', error=error)
 
 @app.route('/logout')
 def logout():
-    # Supprimer le cookie 'username' lors de la déconnexion
-    resp = make_response(redirect('/logout-page'))  # Redirection vers la page de déconnexion
-    resp.set_cookie('username', '', expires=0)  # Le cookie expire instantanément
+    # Delete the 'username' cookie upon logout
+    resp = make_response(redirect('/logout-page'))  # Redirect to the logout page
+    resp.set_cookie('username', '', expires=0)  # The cookie expires instantly
     return resp 
 
 @app.route('/logout-page')  
@@ -77,7 +76,7 @@ def init_db():
         db.commit()
 
 def get_watched_animes(username):
-    # Exécuter la requête SQL pour récupérer les animés regardés par l'utilisateur
+    # Execute the SQL query to retrieve the animes watched by the user
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
@@ -91,7 +90,7 @@ def get_watched_animes(username):
     
     return watched_animes
 
-def get_anime():
+def get_anime(): # Get the list of existing animes
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('SELECT name FROM Animes')
@@ -99,7 +98,7 @@ def get_anime():
     return animes
     
 @app.route("/animelist")
-def animelist():
+def animelist(): # Get the list of animes for a user
     username = request.cookies.get('username')
     
     print(username)
@@ -113,27 +112,26 @@ def animelist():
         return redirect('/login')
 
 @app.route('/register', methods=['GET', 'POST'])
-def register():
+def register():# Create a user
     error = None
     if request.method == 'POST':
-        # Traitement du formulaire d'inscription ici
+        # Registration form processing here
         username = request.form['username']
         password = request.form['password']
 
-        # Vérifier si l'utilisateur est déjà enregistré
+        # Check if the user is already registered
         if already_register(username):
             error = 'Username already exists. Please choose a different username.'
         else:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("INSERT INTO Users (username, password) VALUES (?, ?)", (username, password))
-            db.commit()  # Commit the transaction before closing the connection
+            cursor.execute("INSERT INTO Users (username, password) VALUES (?, ?)", (username, password)) 
+            db.commit()  
             return redirect(url_for('login'))
 
-    # Si la méthode de requête est GET ou si une erreur s'est produite, afficher la page d'inscription
     return render_template('register.html', error=error)
 
-if not Path(DATABASE).exists():
+if not Path(DATABASE).exists(): # Check if a .db file exists
     with app.app_context():
         db = get_db()
         sql = Path('animelist.sql').read_text()
@@ -146,22 +144,21 @@ def add_anime():
     if request.method == 'POST':
         anime_name = request.form['anime']
         username = request.cookies.get('username')
-        # Ajouter l'anime sélectionné à la table watched_animes
+        # Add the selected anime to the watched_animes table
         add_anime_to_watched_animes(anime_name, username)
         
-        # Rediriger vers la même page pour actualiser la liste des animes regardés
+        # Redirect to the same page to refresh the list of watched animes
         return redirect(url_for('animelist'))
     
 def add_anime_to_watched_animes(anime_name, username):
 
     today = datetime.date.today()
-
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT id FROM Animes WHERE name = ?', (anime_name,))
+    cursor.execute('SELECT id FROM Animes WHERE name = ?', (anime_name,)) # Get the id of the anime
     anime_id = cursor.fetchone()
 
-    cursor.execute('SELECT id FROM Users WHERE username = ?', (username,))
+    cursor.execute('SELECT id FROM Users WHERE username = ?', (username,)) # Get the id of the user
     user_id = cursor.fetchone()
 
     cursor.execute("INSERT INTO Watched_Animes (user_id, anime_id, finish_date) VALUES (?, ?, ?)", (user_id[0], anime_id[0], today))
